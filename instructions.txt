@@ -1,0 +1,507 @@
+
+You are my senior full-stack hackathon engineer. Build a mobile-first web app called Coffee Passport for a Google hackathon.
+
+Core concept
+
+Coffee Passport is an AI-powered cultural coffee discovery experience. The user:
+
+uploads a selfie or photo
+gets a playful coffee recommendation based on their vibe/style, not biometric judgment
+unlocks a digital coffee passport stamp
+explores the coffee’s origin, tasting notes, and story
+chats with the coffee as if the coffee has a distinct personality
+optionally sees nearby cafés where they might try similar coffee in real life
+
+The app should feel creative, polished, demo-friendly, and realistic to finish in a hackathon.
+
+Critical constraints
+
+Design and implement with these constraints:
+
+This is for a hackathon, so prioritize clarity, demo quality, reliability, and speed of development
+We have only $5 in Google Cloud credits
+Minimize paid API usage aggressively
+Avoid overengineering
+Use a small curated local dataset of coffees instead of a large real database
+Make the app work even if external APIs are unavailable
+Build as a mobile-first web app / PWA
+Do not build a native mobile app
+Do not build unnecessary auth or complex multi-user systems unless trivial
+Keep architecture simple enough for 1–2 developers to understand quickly
+Product requirements
+Main features
+
+Implement these features:
+
+1. Coffee Passport
+
+A passport-style collection/progression system.
+Each coffee should have:
+
+id
+name
+origin country
+region
+roast level
+flavor notes
+recommended vibe tags
+short story snippet
+“coffee personality” traits
+passport stamp image or stylized icon
+suggested brew method
+
+The passport should show:
+
+unlocked coffees
+unlocked countries/origins
+collected stamps
+badges/achievements
+2. Photo-based vibe recommendation
+
+The user uploads a photo and gets a coffee recommendation.
+Important:
+
+this must be framed as a playful vibe/style-based recommendation
+it must not infer protected traits, identity, attractiveness, or anything creepy
+it must not claim scientific accuracy
+
+The pipeline should be:
+
+accept uploaded image
+analyze image into soft vibe tags such as:
+bold
+cozy
+adventurous
+calm
+minimal
+vibrant
+elegant
+playful
+map vibe tags to coffee profiles in the local dataset
+return one main recommendation and optionally 2 alternates
+provide a short, friendly explanation of “why this coffee”
+
+
+3. Talk with the coffee
+
+Users can chat with a recommended coffee.
+Each coffee should have a distinct conversational identity based on:
+
+origin
+roast
+flavor notes
+personality traits
+story snippet
+
+The coffee should:
+
+speak in first person as the coffee
+be fun and memorable
+stay grounded in the provided metadata
+avoid hallucinating factual origin details not in the dataset
+answer questions like:
+what do you pair well with?
+when are you best to drink?
+why do you taste this way?
+what makes you different from other coffees?
+
+Implementation note:
+
+use straightforward prompting and structured context
+keep the system easy to swap later if we want to experiment with steering
+4. Nearby cafés via Google Places API
+
+After a user gets a coffee recommendation, optionally show nearby cafés or coffee shops where they might try similar coffee.
+Use Google Places API in a lightweight way.
+Requirements:
+
+user can input a location or allow browser geolocation
+show nearby coffee shops / cafés
+show name, rating, address, and maybe photo if easy
+keep requests minimal to protect credits
+degrade gracefully if Places API is unavailable
+
+Frame this as:
+“Try this coffee vibe near you.”
+
+Nice-to-have features
+
+Only add these if they are low complexity:
+
+mood selector to supplement the image-based recommendation
+alternate recommendations
+passport badge achievements
+PWA installability
+seed demo data
+a “Why this coffee?” explanation card
+a compare-two-coffees view
+
+Do not add anything that creates major complexity unless it clearly improves the demo.
+
+Technical direction
+
+Choose a stack optimized for fast hackathon delivery.
+
+Preferred stack
+
+Use:
+
+Next.js with TypeScript
+Tailwind CSS
+simple component library if useful
+local JSON or TypeScript seed data for coffees
+minimal backend API routes
+optional server actions if helpful
+
+Why:
+
+fast to build
+easy deploy
+web-first
+good for mobile-first UI
+can integrate APIs simply
+Data storage
+
+Default to:
+
+local seed dataset for coffee metadata
+local storage for passport progress
+optional lightweight persistence only if simple
+
+Do not introduce Firestore unless it is truly necessary. Since budget is tiny, prefer:
+
+local state
+localStorage
+mock data
+environment-based toggles
+AI integration
+
+Design AI usage to be optional and cheap.
+
+Create an abstraction layer:
+
+analyzePhotoVibe(image)
+recommendCoffee(vibeTags)
+chatWithCoffee(coffee, messages)
+
+These should support:
+
+mock/local mode
+real API mode
+
+If real API mode is used, make it easy to plug in Gemini later with environment variables.
+
+Places integration
+
+Build a wrapper service around Places so it can be disabled cleanly.
+Keep this modular.
+
+Cost controls
+
+Implement these principles everywhere:
+
+minimize external calls
+cache reusable responses where sensible
+avoid repeated image analysis for the same uploaded photo during a session
+avoid sending large context windows to the model
+use a compact coffee dataset
+keep request counts low
+show mock data/fallbacks when API keys are missing
+UX / UI direction
+
+The app should look like a polished, modern, playful coffee product.
+
+Style
+mobile-first
+warm, premium, slightly whimsical
+not overly dark or cyberpunk
+easy to demo on a phone screen
+strong visual identity around stamps, origins, and coffee cards
+Screens/pages
+
+Create these screens:
+
+1. Landing / onboarding
+app title: Coffee Passport
+short tagline
+CTA to start
+optionally choose: upload photo or demo mode
+2. Upload / vibe analysis
+photo upload
+optional mood selector
+loading state
+explanation that this is playful vibe-based matching
+3. Recommendation result
+main coffee card
+short explanation
+flavor notes
+origin country
+roast level
+CTA to unlock stamp
+CTA to chat with this coffee
+optional alternate coffees
+4. Passport
+passport-style grid or card collection
+unlocked countries
+stamps
+badges
+progress indicators
+5. Coffee detail
+rich coffee profile
+story
+tasting notes
+recommended brew method
+personality summary
+6. Coffee chat
+chat UI with the coffee persona
+starter questions
+memory only for the current chat session
+7. Nearby cafés
+location input or geolocation
+nearby café results from Places
+show useful information in clean cards
+UI quality requirements
+polished loading states
+empty states
+graceful error handling
+responsive layout
+accessible text contrast
+strong visual hierarchy
+visually impressive enough for a hackathon demo
+Architecture requirements
+
+Please structure the project cleanly.
+
+Suggested folder structure
+
+Use something like:
+
+app/
+components/
+lib/
+data/
+types/
+public/
+Recommended modules
+
+Implement clear modules such as:
+
+data/coffees.ts
+lib/recommendation.ts
+lib/vibe-analyzer.ts
+lib/coffee-chat.ts
+lib/places.ts
+lib/storage.ts
+types/index.ts
+Important architectural rule
+
+Separate:
+
+presentation/UI
+business logic
+API wrappers
+seed data
+
+Make the app easy to reason about and easy to demo.
+
+Coffee dataset requirements
+
+Create a seed dataset of around 15–20 coffees from different origins.
+Keep it curated and high quality.
+
+Include a mix of:
+
+Ethiopia
+Colombia
+Brazil
+Kenya
+Guatemala
+Sumatra / Indonesia
+Costa Rica
+Yemen or another interesting origin if helpful
+
+Each coffee should have:
+
+descriptive but concise metadata
+distinct personality traits for chat
+distinct vibe-matching tags
+a short passport story
+a stamp identifier or visual label
+
+Keep the data realistic enough for the demo, but do not overcomplicate.
+
+Recommendation logic requirements
+
+Implement a simple but effective recommendation engine.
+
+Inputs
+vibe tags from photo
+optional user mood
+optional manual override/demo mode
+Outputs
+best primary coffee
+confidence or match reasoning
+alternates
+Implementation
+
+Use a lightweight scoring system:
+
+match vibe tags to coffee tags
+weight overlap
+optionally weight mood
+choose top score
+
+Do not make this dependent on AI.
+AI can explain the recommendation, but the selection itself should work locally and reliably.
+
+Coffee chat requirements
+
+Implement coffee chat carefully.
+
+Prompting behavior
+
+The coffee persona should be generated from structured metadata.
+Use prompt templates that include:
+
+coffee name
+origin
+roast
+notes
+personality
+story snippet
+allowed constraints
+Constraints
+
+The coffee should:
+
+stay in character
+remain friendly and concise
+not invent precise facts outside provided context
+redirect uncertain factual questions gracefully
+keep answers demo-friendly
+Fallback mode
+
+
+Places feature requirements
+
+Implement Places API.
+
+Requirements
+location input box
+optional geolocation
+search nearby coffee shops or cafés
+display compact cards with:
+place name
+rating
+address
+photo if easy
+maybe sort by rating or distance if not too complex
+Important
+
+Make this feature optional behind configuration.
+If there is no Places API key:
+
+show a friendly fallback state
+do not break the app
+Delivery requirements
+
+I want you to produce the project carefully and in an organized way.
+
+Step-by-step workflow
+
+Please do the following in order:
+
+Phase 1: plan
+briefly summarize the architecture
+list pages/screens
+list data models
+list environment variables
+identify risky parts
+identify where mock/fallback mode is used
+Phase 2: scaffold
+set up the Next.js project structure
+create types
+seed the coffee dataset
+create reusable UI components
+implement app shell/navigation
+Phase 3: implement core flows
+upload flow
+vibe analysis abstraction
+recommendation engine
+passport unlock logic
+coffee detail page
+chat page
+Phase 4: implement optional integrations
+Places integration
+real AI integration hooks if configured
+PWA or installability if simple
+Phase 5: polish
+improve styling
+loading/error states
+demo data
+mobile responsiveness
+small UX improvements
+Phase 6: handoff
+
+At the end, provide:
+
+concise setup instructions
+required env vars
+how to run locally
+what works in mock mode
+what works in real API mode
+where to customize the coffee dataset
+Coding standards
+use TypeScript everywhere practical
+keep files readable
+avoid giant files
+add comments only where useful
+do not introduce unnecessary abstractions
+do not overengineer state management
+prefer simple React patterns
+make sure the app can run in mock mode with no external services
+Important product framing
+
+Keep the product safe and well framed.
+
+For photo-based recommendation
+
+Do:
+
+present it as playful style/vibe matching
+explain that it is not scientific
+keep the language light
+
+Do not:
+
+infer sensitive traits
+infer identity
+make attractiveness/personality judgments
+imply the model “knows who the user is”
+For coffee chat
+
+Do:
+
+make it educational and fun
+tie it to culture/origin/story
+
+Do not:
+
+make unsupported factual claims
+let the model drift wildly
+Output format I want from you
+
+Work iteratively and carefully.
+
+When responding:
+
+first show the architecture and implementation plan
+then generate the code in organized chunks
+explain what files you are creating
+after major milestones, summarize progress
+keep the code production-like but hackathon-practical
+do not skip the mock/fallback path
+
+If you need to choose between “technically fancy” and “reliable for demo,” choose reliable for demo.
+
+Build the project now.
