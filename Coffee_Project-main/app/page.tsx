@@ -1,3 +1,4 @@
+import { SelfieVibeFlow } from "@/components/selfie-vibe-flow";
 import Link from "next/link";
 import { coffees } from "@/data/coffees";
 import { ArrowRight, Camera, Settings, Sparkles } from "lucide-react";
@@ -47,6 +48,7 @@ export default function HomePage() {
         </div>
       </header>
 
+      <SelfieVibeFlow />
       <div className="grid gap-3">
         <Link href="/analyze" className="btn btn-primary w-full">
           <Camera size={18} /> Start your journey <ArrowRight size={16} />

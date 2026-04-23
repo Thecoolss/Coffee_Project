@@ -2,22 +2,24 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoodTag, VibeTag } from "@/types";
+import { TargetMood, VibeTag, MoodTag } from "@/types";
 import { getClientAiMode } from "@/components/mode-toggle";
 import { ImagePlus, Sparkles, Wand2 } from "lucide-react";
 
-const moods: { id: MoodTag; label: string; emoji: string }[] = [
+const targetMoods: { id: TargetMood; label: string; emoji: string }[] = [
+  { id: "happy", label: "Happy", emoji: "😊" },
+  { id: "energetic", label: "Energetic", emoji: "⚡" },
+  { id: "calm", label: "Calm", emoji: "🌿" },
   { id: "focused", label: "Focused", emoji: "🎯" },
-  { id: "social", label: "Social", emoji: "🫶" },
-  { id: "relaxed", label: "Relaxed", emoji: "🌿" },
-  { id: "creative", label: "Creative", emoji: "✨" }
+  { id: "cozy", label: "Cozy", emoji: "☕" },
+  { id: "social", label: "Social", emoji: "🫶" }
 ];
 
 export default function AnalyzePage() {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [mood, setMood] = useState<MoodTag | "">("");
+  const [targetMood, setTargetMood] = useState<TargetMood | "">("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,19 +42,32 @@ export default function AnalyzePage() {
       const base64 = await toBase64(file);
       const imageBase64 = base64.split(",")[1] ?? "";
       const mode = getClientAiMode();
+
       console.log("[Analyze] click", {
         fileName: file.name,
         fileType: file.type || "image/jpeg",
         fileSize: file.size,
-        mood,
+        targetMood,
         mode
       });
+
       const response = await fetch("/api/vibe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64, mimeType: file.type || "image/jpeg", mode })
+        body: JSON.stringify({
+          imageBase64,
+          mimeType: file.type || "image/jpeg",
+          mode
+        })
       });
-      const result = (await response.json()) as { vibes: VibeTag[]; summary: string };
+
+      const result = (await response.json()) as {
+        vibes: VibeTag[];
+        summary: string;
+        mood?: MoodTag;
+        energyLevel?: "low" | "medium" | "high";
+      };
+
       console.log("[Analyze] response", {
         ok: response.ok,
         status: response.status,
@@ -62,7 +77,10 @@ export default function AnalyzePage() {
       const params = new URLSearchParams();
       params.set("vibes", result.vibes.join(","));
       params.set("summary", result.summary);
-      if (mood) params.set("mood", mood);
+
+      if (result.mood) params.set("mood", result.mood);
+      if (targetMood) params.set("targetMood", targetMood);
+
       router.push(`/recommendation?${params.toString()}`);
     } catch (error) {
       console.error("[Analyze] request failed", error);
@@ -121,16 +139,21 @@ export default function AnalyzePage() {
       </label>
 
       <div className="card p-4">
-        <p className="text-sm font-semibold text-mocha-800">How are you feeling?</p>
-        <p className="text-xs text-mocha-500">Optional &mdash; nudges the match</p>
+        <p className="text-sm font-semibold text-mocha-800">
+          What mood do you want to reach?
+        </p>
+        <p className="text-xs text-mocha-500">
+          Choose the feeling you want your coffee to help you get to
+        </p>
         <div className="mt-3 flex flex-wrap gap-2">
-          {moods.map((m) => {
-            const active = mood === m.id;
+          {targetMoods.map((m) => {
+            const active = targetMood === m.id;
             return (
               <button
                 key={m.id}
+                type="button"
                 className={`chip ${active ? "chip-active" : ""}`}
-                onClick={() => setMood((prev) => (prev === m.id ? "" : m.id))}
+                onClick={() => setTargetMood((prev) => (prev === m.id ? "" : m.id))}
               >
                 <span>{m.emoji}</span>
                 <span>{m.label}</span>
