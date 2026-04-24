@@ -8,9 +8,14 @@ type Cafe = CafeResult;
 export function NearbyClient({ coffeeName }: { coffeeName?: string }) {
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleUseLocation() {
-    if (!navigator.geolocation) return;
+    setError(null);
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported in this browser.");
+      return;
+    }
 
     setLoading(true);
 
@@ -28,9 +33,18 @@ export function NearbyClient({ coffeeName }: { coffeeName?: string }) {
           });
 
           const data = await res.json();
+          if (!res.ok) {
+            setError(data?.error ?? "Nearby lookup failed.");
+            setCafes([]);
+            return;
+          }
           setCafes(data.cafes ?? []);
+          if (!data?.cafes?.length) {
+            setError("No cafes found or Places is not configured.");
+          }
         } catch (error) {
           console.error(error);
+          setError("Could not fetch nearby cafes.");
           setCafes([]);
         } finally {
           setLoading(false);
@@ -38,6 +52,7 @@ export function NearbyClient({ coffeeName }: { coffeeName?: string }) {
       },
       (error) => {
         console.error(error);
+        setError("Location permission denied or unavailable.");
         setLoading(false);
       }
     );
@@ -60,12 +75,24 @@ export function NearbyClient({ coffeeName }: { coffeeName?: string }) {
         {loading ? "Finding cafes..." : "Use my current location"}
       </button>
 
-            <div className="space-y-3">
+      {error ? (
+        <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </p>
+      ) : null}
+
+      {!loading && cafes.length === 0 && !error ? (
+        <p className="text-sm text-mocha-500">
+          Tap "Use my current location" and allow location access to see nearby cafes.
+        </p>
+      ) : null}
+
+      <div className="space-y-3">
         {cafes.map((cafe) => (
-            <div key={cafe.id} className="card p-4">
+          <div key={cafe.id} className="card p-4">
             <div className="flex items-start gap-3">
-                <span className="text-xl">☕</span>
-                <div>
+              <span className="text-xl">☕</span>
+              <div>
                 <p className="font-semibold text-mocha-900">{cafe.name}</p>
                 <p className="text-sm text-mocha-600">{cafe.address}</p>
 
@@ -101,22 +128,21 @@ export function NearbyClient({ coffeeName }: { coffeeName?: string }) {
                     ) : null}
                 </div>
 
-                {/* 🔥 GOOGLE MAPS BUTTON */}
                 <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
                     cafe.name
-                    )}&query_place_id=${cafe.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-3 inline-flex items-center gap-2 rounded-xl bg-mocha-900 px-3 py-2 text-sm text-white transition hover:bg-mocha-800"
+                  )}&query_place_id=${cafe.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-flex items-center gap-2 rounded-xl bg-mocha-900 px-3 py-2 text-sm text-white transition hover:bg-mocha-800"
                 >
-                    📍 Open in Maps
+                  📍 Open in Maps
                 </a>
-                </div>
+              </div>
             </div>
-            </div>
+          </div>
         ))}
-        </div>
+      </div>
     </section>
   );
 }

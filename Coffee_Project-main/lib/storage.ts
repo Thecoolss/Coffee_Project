@@ -2,6 +2,7 @@ import { PassportState } from "@/types";
 
 const PASSPORT_KEY = "coffee-passport-state-v1";
 const RECOMMENDATION_KEY = "coffee-passport-current-recommendation";
+const LAST_RECOMMENDATION_KEY = "coffee-passport-last-recommendation-v1";
 
 const defaultPassport: PassportState = {
   unlockedCoffeeIds: [],
@@ -55,4 +56,34 @@ export function saveCurrentRecommendation(coffeeId: string): void {
 export function getCurrentRecommendation(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(RECOMMENDATION_KEY);
+}
+
+export type LastRecommendationContext = {
+  coffeeId: string;
+  vibes: string[];
+  summary?: string;
+  mood?: string;
+  targetMood?: string;
+  savedAt: number;
+};
+
+export function saveLastRecommendation(context: LastRecommendationContext): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(LAST_RECOMMENDATION_KEY, JSON.stringify(context));
+}
+
+export function getLastRecommendation(): LastRecommendationContext | null {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem(LAST_RECOMMENDATION_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as LastRecommendationContext;
+  } catch {
+    return null;
+  }
+}
+
+export function clearLastRecommendation(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(LAST_RECOMMENDATION_KEY);
 }

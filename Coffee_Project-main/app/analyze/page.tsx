@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TargetMood, VibeTag, MoodTag } from "@/types";
 import { getClientAiMode } from "@/components/mode-toggle";
-import { ImagePlus, Sparkles, Wand2 } from "lucide-react";
+import { Camera, ImagePlus, Sparkles, Wand2, X } from "lucide-react";
 
 const targetMoods: { id: TargetMood; label: string; emoji: string }[] = [
   { id: "happy", label: "Happy", emoji: "😊" },
@@ -22,8 +22,18 @@ export default function AnalyzePage() {
   const [targetMood, setTargetMood] = useState<TargetMood | "">("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  useEffect(() => {
+    return () => stopCamera();
+  }, []);
 
   function handleFile(next: File | null) {
+    stopCamera();
+    setCameraError(null);
     setFile(next);
     if (next) {
       const url = URL.createObjectURL(next);
@@ -31,6 +41,76 @@ export default function AnalyzePage() {
     } else {
       setPreviewUrl(null);
     }
+  }
+
+  function stopCamera() {
+    if (streamRef.current) {
+      for (const track of streamRef.current.getTracks()) {
+        track.stop();
+      }
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setCameraOpen(false);
+  }
+
+  async function startCamera() {
+    setCameraError(null);
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setCameraError("This browser does not support direct camera capture.");
+        return;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+        audio: false
+      });
+      streamRef.current = stream;
+      setCameraOpen(true);
+      requestAnimationFrame(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {
+            setCameraError("Could not start camera preview.");
+          });
+        }
+      });
+    } catch (err) {
+      console.error("[Camera] failed to start", err);
+      setCameraError("Camera access was denied or unavailable.");
+    }
+  }
+
+  function captureFromCamera() {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const width = video.videoWidth || 1280;
+    const height = video.videoHeight || 720;
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      setCameraError("Could not capture frame from camera.");
+      return;
+    }
+    ctx.drawImage(video, 0, 0, width, height);
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          setCameraError("Camera capture failed.");
+          return;
+        }
+        const captured = new File([blob], `camera-${Date.now()}.jpg`, {
+          type: "image/jpeg"
+        });
+        handleFile(captured);
+      },
+      "image/jpeg",
+      0.92
+    );
   }
 
   async function handleAnalyze() {
@@ -105,7 +185,7 @@ export default function AnalyzePage() {
       </div>
 
       <label
-        htmlFor="vibe-file"
+        htmlFor="vibe-file-upload"
         className="card relative block cursor-pointer overflow-hidden p-0 transition hover:border-[var(--line-strong)]"
       >
         {previewUrl ? (
@@ -130,13 +210,53 @@ export default function AnalyzePage() {
           </div>
         )}
         <input
-          id="vibe-file"
+          id="vibe-file-upload"
           type="file"
           accept="image/*"
           onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
           className="sr-only"
         />
       </label>
+
+      <div className="grid grid-cols-2 gap-2">
+        <label
+          htmlFor="vibe-file-upload"
+          className="btn btn-ghost w-full cursor-pointer justify-center"
+        >
+          Upload a photo
+        </label>
+        <button type="button" onClick={startCamera} className="btn btn-primary w-full justify-center">
+          <Camera size={16} /> Take photo
+        </button>
+      </div>
+
+      {cameraOpen ? (
+        <div className="card space-y-3 p-3">
+          <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-black">
+            <video
+              ref={videoRef}
+              className="h-56 w-full object-cover"
+              autoPlay
+              playsInline
+              muted
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" onClick={captureFromCamera} className="btn btn-primary w-full">
+              <Camera size={16} /> Capture
+            </button>
+            <button type="button" onClick={stopCamera} className="btn btn-ghost w-full">
+              <X size={16} /> Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {cameraError ? (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          {cameraError}
+        </p>
+      ) : null}
 
       <div className="card p-4">
         <p className="text-sm font-semibold text-mocha-800">

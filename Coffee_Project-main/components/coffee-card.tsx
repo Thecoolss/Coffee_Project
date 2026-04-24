@@ -6,9 +6,10 @@ type Props = {
   coffee: Coffee;
   reason?: string;
   featured?: boolean;
+  showQuickActions?: boolean;
 };
 
-export function CoffeeCard({ coffee, reason, featured }: Props) {
+export function CoffeeCard({ coffee, reason, featured, showQuickActions = true }: Props) {
   if (featured) {
     return (
       <article className="card-elevated relative overflow-hidden p-6 animate-pop">
@@ -51,14 +52,16 @@ export function CoffeeCard({ coffee, reason, featured }: Props) {
           </p>
         ) : null}
 
-        <div className="relative mt-5 flex gap-2">
-          <Link href={`/coffee/${coffee.id}`} className="btn btn-ghost flex-1">
-            Details <ArrowRight size={16} />
-          </Link>
-          <Link href={`/chat/${coffee.id}`} className="btn btn-primary flex-1">
-            <MessageCircle size={16} /> Talk
-          </Link>
-        </div>
+        {showQuickActions ? (
+          <div className="relative mt-5 flex gap-2">
+            <Link href={`/coffee/${coffee.id}`} className="btn btn-ghost flex-1">
+              Details <ArrowRight size={16} />
+            </Link>
+            <Link href={`/chat/${coffee.id}`} className="btn btn-primary flex-1">
+              <MessageCircle size={16} /> Talk
+            </Link>
+          </div>
+        ) : null}
       </article>
     );
   }

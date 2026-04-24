@@ -9,7 +9,8 @@ type SearchInput = {
 export async function findNearbyCafes(
   input: SearchInput
 ): Promise<CafeResult[]> {
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  const apiKey =
+    process.env.GOOGLE_PLACES_API_KEY ?? process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
   const enabled = process.env.NEXT_PUBLIC_ENABLE_PLACES === "true";
 
   if (!enabled || !apiKey) {

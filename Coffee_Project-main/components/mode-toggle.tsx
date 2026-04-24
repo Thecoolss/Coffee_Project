@@ -8,7 +8,8 @@ const KEY = "bean-there-ai-mode";
 export function getClientAiMode(): "mock" | "real" {
   if (typeof window === "undefined") return "mock";
   const value = localStorage.getItem(KEY);
-  return value === "real" ? "real" : "mock";
+  if (value === "real" || value === "mock") return value;
+  return process.env.NEXT_PUBLIC_AI_MODE === "real" ? "real" : "mock";
 }
 
 export function ModeToggle() {
