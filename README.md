@@ -1,78 +1,121 @@
 # Bean There
 
-Bean There is a mobile-first hackathon web app for playful coffee discovery.  
-Upload a photo, get a vibe-based coffee match, unlock passport stamps, and chat with your coffee persona.
+Bean There is a mobile-first web app that turns a selfie into a playful coffee journey:
+
+- analyzes photo vibe (with safe fallbacks)
+- recommends a coffee bean profile and a practical drink order
+- unlocks passport stamps and visa-style badges
+- lets users chat with the matched coffee personality
+
+Built for hackathon demos: fast, polished, and resilient even when external APIs fail.
+
+## Judge-Friendly Overview
+
+- **Problem:** Coffee discovery is generic and not emotionally engaging.
+- **Solution:** A "coffee passport" that maps vibe -> bean -> drink -> conversation.
+- **Creativity:** Animated talking bean avatar, country-themed visuals, passport progression.
+- **Practicality:** Users still get a useful order recommendation and nearby cafe links.
+- **Reliability:** Demo mode works without paid APIs; real mode upgrades with Gemini/Places.
+
+## Repository Layout
+
+The app is now at the repository root (`app`, `components`, `lib`, `data`, `public`, etc.).
+
+## Core Features
+
+- Photo input with two paths: upload from gallery or capture from webcam/camera
+- AI vibe analysis (`Gemini`) with deterministic fallback (`Demo`)
+- Coffee recommendation + "why from your photo" explanation
+- Drink recommendation ("best order for this vibe")
+- Chat with coffee personas
+- Passport booklet UI with stamps, date marks, and visa stickers
+- Nearby cafes tab (separate from recommendation flow)
+- Mobile-first UI with desktop phone frame for presentation
 
 ## Tech Stack
 
-- Next.js (App Router) + TypeScript
+- Next.js App Router + TypeScript
 - Tailwind CSS
-- `motion` (Framer Motion) for page/character animation
-- Local curated dataset in `data/coffees.ts`
-- Optional Gemini + Google Places integrations
+- `motion` for page and character animation
+- Local curated coffee and drink datasets
+- Optional Gemini + Google Places integration
 
-## Features
+## Quick Start
 
-- Vibe analysis flow with `Demo` (mock) and `Gemini` (real) modes
-- Local deterministic recommendation engine
-- Coffee detail pages + passport progression
-- Chat with coffee personalities (animated talking bean + country-themed visuals)
-- Nearby cafes (optional Places API)
-- Mobile-first UI with desktop phone frame for demos
-- Lightweight PWA manifest/icons
+```bash
+npm install
+cp .env.example .env.local
+npm run dev
+```
 
-## Run Locally
-
-1. Install dependencies:
-   - `npm install`
-2. Create env file:
-   - `cp .env.example .env.local`
-3. Start dev server:
-   - `npm run dev`
-4. Open:
-   - `http://localhost:3000`
+Open [http://localhost:3000](http://localhost:3000).
 
 ## Environment Variables
 
-- `NEXT_PUBLIC_AI_MODE` - `mock` or `real` (default UI mode)
-- `GEMINI_API_KEY` - required for real Gemini responses
-- `GEMINI_MODEL` - optional override (default: `gemini-2.0-flash`)
-- `NEXT_PUBLIC_ENABLE_PLACES` - `true` to enable nearby cafes via Places
-- `NEXT_PUBLIC_GOOGLE_PLACES_API_KEY` - required when Places is enabled
+Create `.env.local`:
+
+```env
+NEXT_PUBLIC_AI_MODE=real
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-2.5-flash
+
+NEXT_PUBLIC_ENABLE_PLACES=true
+GOOGLE_PLACES_API_KEY=...
+```
+
+Notes:
+
+- Use `NEXT_PUBLIC_AI_MODE=mock` for guaranteed offline-safe demos.
+- Nearby cafes require Places to be enabled and a valid key.
 
 ## API Endpoints
 
 - `POST /api/vibe`
-  - Body: `{ imageBase64, mimeType?, mode? }`
-  - Returns: `{ vibes, summary }`
+  - Input: `{ imageBase64, mimeType?, mode? }`
+  - Output: vibe analysis + recommendation metadata
 - `POST /api/chat`
-  - Body: `{ coffeeId, messages, mode? }`
-  - Returns: `{ response }`
+  - Input: `{ coffeeId, messages, mode? }`
+  - Output: `{ response }`
+- `POST /api/places`
+  - Input: `{ lat, lng }`
+  - Output: nearby cafe list (or empty fallback)
 
-## Data + Persistence
+## Data and Persistence
 
-- Coffee catalog is local: `data/coffees.ts`
-- Recommendation scoring is local: `lib/recommendation.ts`
-- Passport progress is stored in browser `localStorage`
-  - This means progress is per device/browser session by default
+- Coffee beans: `data/coffees.ts`
+- Drinks: `data/drinks.ts`
+- Recommendation logic: `lib/recommendation.ts` and `lib/drink-recommendation.ts`
+- Passport and latest recommendation are persisted in browser `localStorage`
+  - behavior is per device/browser session by default
 
-## Modes
+## Demo Flow (60-90 seconds)
 
-- `Demo` mode:
-  - No external AI required
-  - Uses local fallback for vibe/chat
-  - Best for stable live demos
-- `Gemini` mode:
-  - Uses Gemini through API routes
-  - Falls back gracefully when quota/network issues happen
+1. Start on Home, click **Start your journey**
+2. Take/upload a selfie and analyze vibe
+3. Show coffee recommendation + "why" summary + order suggestion
+4. Open chat with the matched coffee
+5. Open Passport to show stamp unlock + visa stickers
+6. Optionally open Nearby tab
 
-## Notes for Demo Day
+## Resilience and Cost Controls
 
-- If Gemini returns `429`, switch to `Demo` mode in `/settings`
-- Nearby cafes are optional and can stay disabled for a fully offline-safe demo
+- Demo mode avoids live API spend and quota risks
+- Real mode gracefully falls back on API/network failure
+- If Gemini returns `429`, switch to Demo mode in `/settings`
 
-## Customize
+## Current Repo Health Notes
 
-- Coffee dataset and personality: `data/coffees.ts`
-- Shared types: `types/index.ts`
-- Theme and animated bean visuals: `lib/bean-theme.ts`, `components/talking-bean.tsx`
+- Type check and production build pass
+- `.env` files are ignored from git; `.env.example` remains allowed
+- There are currently local uncommitted changes from active development
+
+## Optional Next Step: CI/CD
+
+A lightweight CI pipeline is recommended (not overkill) before final judging:
+
+- run on PR/push to `main`
+- install deps
+- type check
+- production build
+
+This gives confidence that future commits do not break demo-critical flows.
