@@ -1,36 +1,18 @@
 # Bean There
 
-Bean There is a mobile-first web app that turns a selfie into a playful coffee journey:
+Bean There is a mobile-first web app that turns a selfie into a playful coffee journey.
+Users can take or upload a photo, receive a vibe-based coffee recommendation, unlock passport stamps, and chat with the matched coffee personality.
 
-- analyzes photo vibe (with safe fallbacks)
-- recommends a coffee bean profile and a practical drink order
-- unlocks passport stamps and visa-style badges
-- lets users chat with the matched coffee personality
-
-Built for hackathon demos: fast, polished, and resilient even when external APIs fail.
-
-## Judge-Friendly Overview
-
-- **Problem:** Coffee discovery is generic and not emotionally engaging.
-- **Solution:** A "coffee passport" that maps vibe -> bean -> drink -> conversation.
-- **Creativity:** Animated talking bean avatar, country-themed visuals, passport progression.
-- **Practicality:** Users still get a useful order recommendation and nearby cafe links.
-- **Reliability:** Demo mode works without paid APIs; real mode upgrades with Gemini/Places.
-
-## Repository Layout
-
-The app is now at the repository root (`app`, `components`, `lib`, `data`, `public`, etc.).
-
-## Core Features
+## Features
 
 - Photo input with two paths: upload from gallery or capture from webcam/camera
-- AI vibe analysis (`Gemini`) with deterministic fallback (`Demo`)
-- Coffee recommendation + "why from your photo" explanation
-- Drink recommendation ("best order for this vibe")
-- Chat with coffee personas
+- Vibe analysis with Gemini mode and local demo fallback mode
+- Coffee bean recommendation with a short "why from your photo" explanation
+- Practical drink suggestion for the recommended vibe
+- Chat with animated coffee personas
 - Passport booklet UI with stamps, date marks, and visa stickers
 - Nearby cafes tab (separate from recommendation flow)
-- Mobile-first UI with desktop phone frame for presentation
+- Mobile-first UI with desktop phone frame
 
 ## Tech Stack
 
@@ -39,6 +21,15 @@ The app is now at the repository root (`app`, `components`, `lib`, `data`, `publ
 - `motion` for page and character animation
 - Local curated coffee and drink datasets
 - Optional Gemini + Google Places integration
+
+## Project Structure
+
+- `app/` - Next.js routes, pages, and API routes
+- `components/` - shared UI components
+- `data/` - local coffee and drink datasets
+- `lib/` - recommendation, AI, Places, storage, and theme logic
+- `public/` - manifest and app icons
+- `types/` - shared TypeScript types
 
 ## Quick Start
 
@@ -49,6 +40,14 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+## Scripts
+
+```bash
+npm run dev
+npm run build
+npm run start
+```
 
 ## Environment Variables
 
@@ -65,14 +64,14 @@ GOOGLE_PLACES_API_KEY=...
 
 Notes:
 
-- Use `NEXT_PUBLIC_AI_MODE=mock` for guaranteed offline-safe demos.
+- Use `NEXT_PUBLIC_AI_MODE=mock` to run without Gemini.
 - Nearby cafes require Places to be enabled and a valid key.
 
 ## API Endpoints
 
 - `POST /api/vibe`
   - Input: `{ imageBase64, mimeType?, mode? }`
-  - Output: vibe analysis + recommendation metadata
+  - Output: vibe analysis and recommendation metadata
 - `POST /api/chat`
   - Input: `{ coffeeId, messages, mode? }`
   - Output: `{ response }`
@@ -88,7 +87,7 @@ Notes:
 - Passport and latest recommendation are persisted in browser `localStorage`
   - behavior is per device/browser session by default
 
-## Demo Flow (60-90 seconds)
+## User Flow
 
 1. Start on Home, click **Start your journey**
 2. Take/upload a selfie and analyze vibe
@@ -97,25 +96,14 @@ Notes:
 5. Open Passport to show stamp unlock + visa stickers
 6. Optionally open Nearby tab
 
-## Resilience and Cost Controls
+## Modes
 
-- Demo mode avoids live API spend and quota risks
-- Real mode gracefully falls back on API/network failure
-- If Gemini returns `429`, switch to Demo mode in `/settings`
+- **Demo mode:** uses local fallback behavior and does not require external AI calls.
+- **Gemini mode:** uses Gemini for photo analysis and chat when `GEMINI_API_KEY` is available.
+- **Places mode:** uses Google Places when `NEXT_PUBLIC_ENABLE_PLACES=true` and a valid Places key is configured.
 
-## Current Repo Health Notes
+## Notes
 
-- Type check and production build pass
-- `.env` files are ignored from git; `.env.example` remains allowed
-- There are currently local uncommitted changes from active development
-
-## Optional Next Step: CI/CD
-
-A lightweight CI pipeline is recommended (not overkill) before final judging:
-
-- run on PR/push to `main`
-- install deps
-- type check
-- production build
-
-This gives confidence that future commits do not break demo-critical flows.
+- `.env` and `.env.local` files are ignored by git.
+- `.env.example` is safe to commit and should only contain variable names/placeholders.
+- Passport progress is stored locally in the browser, not in a shared database.
