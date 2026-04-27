@@ -96,3 +96,15 @@ export type Drink = {
   description: string;
   orderHint: string;
 };
+
+export type CoffeeMemory = {
+    id: string;
+    imageUrl: string;
+    coffeeName: string;
+    cafeName?: string;
+    address?: string;
+    city?: string;
+    lat?: number;
+    lng?: number;
+    createdAt: string;
+  };

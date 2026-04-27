@@ -3,6 +3,7 @@ import { coffees } from "@/data/coffees";
 import { ArrowRight, Camera, Settings, Sparkles } from "lucide-react";
 import { BeanLogo } from "@/components/bean-logo";
 import { HomeLatestRecommendation } from "@/components/home-latest-recommendation";
+import { CoffeeMemoryJournal } from "@/components/coffee-memory-journal";
 
 export default function HomePage() {
   const countries = new Set(coffees.map((c) => c.originCountry)).size;
@@ -48,12 +49,24 @@ export default function HomePage() {
         </div>
       </header>
 
+      
+
       <div className="grid gap-3">
         <Link href="/analyze" className="btn btn-primary w-full">
           <Camera size={18} /> Start your journey <ArrowRight size={16} />
         </Link>
         <Link href="/recommendation?demo=1" className="btn btn-ghost w-full">
           Peek a demo match
+        </Link>
+
+        <Link
+            href="/add-memory"
+            className="btn btn-primary w-full">
+            Add a coffee memory ☕
+        </Link>
+        
+        <Link href="/globe" className="btn btn-ghost w-full">
+        View my coffee map 🌍
         </Link>
       </div>
 

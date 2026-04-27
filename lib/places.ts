@@ -10,15 +10,36 @@ export async function findNearbyCafes(
   input: SearchInput
 ): Promise<CafeResult[]> {
   const apiKey =
-    process.env.GOOGLE_PLACES_API_KEY ?? process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
+    process.env.GOOGLE_PLACES_API_KEY ??
+    process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
+
   const enabled = process.env.NEXT_PUBLIC_ENABLE_PLACES === "true";
+
+  console.log("Places enabled:", enabled);
+  console.log("Has Places key:", Boolean(apiKey));
 
   if (!enabled || !apiKey) {
     return [];
   }
 
-  const radius = input.radius ?? 2500;
+  const radius = input.radius ?? 8000;
 
+  const nearbyResults = await nearbyCafeSearch(input, radius, apiKey);
+
+  if (nearbyResults.length > 0) {
+    return nearbyResults;
+  }
+
+  console.log("Nearby search returned empty, trying text search fallback...");
+
+  return textCafeSearch(input, radius, apiKey);
+}
+
+async function nearbyCafeSearch(
+  input: SearchInput,
+  radius: number,
+  apiKey: string
+): Promise<CafeResult[]> {
   const response = await fetch(
     "https://places.googleapis.com/v1/places:searchNearby",
     {
@@ -30,9 +51,8 @@ export async function findNearbyCafes(
           "places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.location,places.currentOpeningHours",
       },
       body: JSON.stringify({
-        includedTypes: ["cafe", "coffee_shop"],
-        maxResultCount: 8,
-        rankPreference: "DISTANCE",
+        includedTypes: ["cafe"],
+        maxResultCount: 10,
         locationRestriction: {
           circle: {
             center: {
@@ -48,14 +68,68 @@ export async function findNearbyCafes(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error("Places API failed:", response.status, errorText);
+    console.error(
+      "Nearby Places API failed:",
+      response.status,
+      await response.text()
+    );
     return [];
   }
 
   const data = await response.json();
-  const places = data?.places ?? [];
+  console.log("Nearby places response:", data);
 
+  return mapPlaces(data?.places ?? [], input);
+}
+
+async function textCafeSearch(
+  input: SearchInput,
+  radius: number,
+  apiKey: string
+): Promise<CafeResult[]> {
+  const response = await fetch(
+    "https://places.googleapis.com/v1/places:searchText",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask":
+          "places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.location,places.currentOpeningHours",
+      },
+      body: JSON.stringify({
+        textQuery: "coffee cafe",
+        maxResultCount: 10,
+        locationBias: {
+          circle: {
+            center: {
+              latitude: input.lat,
+              longitude: input.lng,
+            },
+            radius,
+          },
+        },
+      }),
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    console.error(
+      "Text Places API failed:",
+      response.status,
+      await response.text()
+    );
+    return [];
+  }
+
+  const data = await response.json();
+  console.log("Text places response:", data);
+
+  return mapPlaces(data?.places ?? [], input);
+}
+
+function mapPlaces(places: any[], input: SearchInput): CafeResult[] {
   return places.map((place: any) => {
     const latitude = place.location?.latitude;
     const longitude = place.location?.longitude;
@@ -73,12 +147,7 @@ export async function findNearbyCafes(
           : undefined,
       distanceMeters:
         typeof latitude === "number" && typeof longitude === "number"
-          ? getDistanceMeters(
-              input.lat,
-              input.lng,
-              latitude,
-              longitude
-            )
+          ? getDistanceMeters(input.lat, input.lng, latitude, longitude)
           : undefined,
     };
   });
